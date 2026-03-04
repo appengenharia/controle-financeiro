@@ -1,16 +1,7 @@
-// =========================
-// Configuração da API
-// =========================
-
 const API_URL =
   'https://script.google.com/macros/s/AKfycbzILvsQK2SBM8yUKhlaX8pMdbUO6vU5ywc5ON_bt0sw1cGFyViWxv0AHadN7XpmUySmGA/exec';
 
-// =========================
-// Módulo principal (IIFE)
-// =========================
-
 const App = (() => {
-  // --------- Estado ---------
   let TOKEN = '';
   let USER = null;
   let WORKS = [];
@@ -18,14 +9,10 @@ const App = (() => {
   let currentObraId = '';
   let lineChart = null;
 
-  // --------- Utilitários ---------
   const $ = (id) => document.getElementById(id);
 
-  const formatBRL = (value) =>
-    Number(value || 0).toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    });
+  const formatBRL = (v) =>
+    Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   const setMsg = (id, text, ok = false) => {
     const el = $(id);
@@ -39,22 +26,18 @@ const App = (() => {
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
   };
 
-  // --------- API ---------
   async function api(action, payload = {}) {
     const res = await fetch(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action, ...payload }),
     });
-
     if (!res.ok) throw new Error('Erro de comunicação.');
-
     const data = await res.json();
     if (!data.ok) throw new Error(data.error || 'Erro.');
     return data.data;
   }
 
-  // --------- UI helpers ---------
   function fillWorks() {
     const select = $('obraSelect');
     if (!select) return;
@@ -62,9 +45,7 @@ const App = (() => {
     (WORKS || []).forEach((obra) => {
       const o = document.createElement('option');
       o.value = obra.obra_id;
-      o.textContent = obra.obra_nome
-        ? `${obra.obra_id} — ${obra.obra_nome}`
-        : obra.obra_id;
+      o.textContent = obra.obra_nome ? `${obra.obra_id} — ${obra.obra_nome}` : obra.obra_id;
       select.appendChild(o);
     });
     if (currentObraId) select.value = currentObraId;
@@ -85,8 +66,7 @@ const App = (() => {
   function updateUserPill() {
     const pill = $('pillUser');
     if (!pill || !USER) return;
-    const label = USER.role === 'ADMIN' ? 'ADMIN' : 'USUÁRIO';
-    pill.textContent = `${label} • ${USER.username}`;
+    pill.textContent = `${USER.role === 'ADMIN' ? 'ADMIN' : 'USUÁRIO'} • ${USER.username}`;
     pill.classList.remove('hidden');
     const btnLogout = $('btnLogout');
     if (btnLogout) btnLogout.classList.remove('hidden');
@@ -95,10 +75,12 @@ const App = (() => {
   function applyRoleUI() {
     const isAdmin = USER && USER.role === 'ADMIN';
     const adminArea = $('adminArea');
-    if (isAdmin) {
-      if (adminArea) adminArea.classList.remove('hidden');
-    } else {
-      if (adminArea) adminArea.classList.add('hidden');
+    if (adminArea) {
+      if (isAdmin) {
+        adminArea.classList.remove('hidden');
+      } else {
+        adminArea.classList.add('hidden');
+      }
     }
   }
 
@@ -108,15 +90,13 @@ const App = (() => {
     el.type = el.type === 'password' ? 'text' : 'password';
   }
 
-  // --------- Login ---------
   async function login() {
     setMsg('loginMsg', '');
     const btn = $('btnLogin');
     if (btn) { btn.disabled = true; btn.textContent = 'Entrando...'; }
 
     try {
-      const roleVal = $('loginRole').value;
-      const role = roleVal === 'ADMIN' ? 'ADMIN' : 'USER';
+      const role = $('loginRole').value === 'ADMIN' ? 'ADMIN' : 'USER';
       const username = $('loginUser').value.trim();
       const password = $('loginPass').value;
 
@@ -179,7 +159,6 @@ const App = (() => {
     finally { location.reload(); }
   }
 
-  // --------- Init app ---------
   async function initApp() {
     const init = await api('app.init', { token: TOKEN });
 
@@ -208,7 +187,6 @@ const App = (() => {
     }
   }
 
-  // --------- Dashboard ---------
   function applySummaryAndSeries(summary, series) {
     $('kTotal').textContent = formatBRL(summary.totalGeral);
     $('kStatus').textContent = summary.isClosed ? 'FECHADO' : 'ABERTO';
@@ -228,13 +206,9 @@ const App = (() => {
     const values = (series.points || []).map((p) => Number(p.total || 0));
 
     if (lineChart) lineChart.destroy();
-    const ctx = $('chartLine');
-    lineChart = new Chart(ctx, {
+    lineChart = new Chart($('chartLine'), {
       type: 'line',
-      data: {
-        labels,
-        datasets: [{ data: values, tension: 0.25 }],
-      },
+      data: { labels, datasets: [{ data: values, tension: 0.25 }] },
       options: { plugins: { legend: { display: false } } },
     });
   }
@@ -254,7 +228,6 @@ const App = (() => {
     refreshAll();
   }
 
-  // --------- Despesas ---------
   async function registerExpense() {
     setMsg('msg', '');
     const btn = $('btnSaveExpense');
@@ -276,13 +249,8 @@ const App = (() => {
         token: TOKEN,
         payload: {
           obra_id: currentObraId,
-          data,
-          categoria,
-          detalhes,
-          valor,
-          reembolsavel,
-          nota_file_id: '',
-          nota_url: '',
+          data, categoria, detalhes, valor, reembolsavel,
+          nota_file_id: '', nota_url: '',
         },
       });
 
@@ -297,11 +265,9 @@ const App = (() => {
     }
   }
 
-  // --------- PDF ---------
   async function printPdf() {
     const btn = $('btnPrintPdf');
     if (btn) { btn.disabled = true; btn.textContent = 'Gerando...'; }
-
     try {
       const monthRef = $('fMes').value || currentMonth();
       const result = await api('report.pdf', { token: TOKEN, monthRef, obra_id: currentObraId });
@@ -314,7 +280,7 @@ const App = (() => {
   }
 
   // =========================
-  // ADMIN — Abas
+  // ADMIN
   // =========================
 
   function adminTab(tabName) {
@@ -325,27 +291,24 @@ const App = (() => {
       if (el) el.classList.toggle('hidden', name !== tabName);
       if (btn) btn.classList.toggle('tab-active', name === tabName);
     });
-
     if (tabName === 'users') loadAdminUsers();
     if (tabName === 'works') loadAdminWorks();
     if (tabName === 'alloc') loadAdminAlloc();
   }
 
-  // --------- Aba Usuários ---------
+  // --- Usuários ---
+
   async function loadAdminUsers() {
     const tbody = $('admUsersTbody');
     if (!tbody) return;
     tbody.innerHTML = '<tr><td colspan="4">Carregando...</td></tr>';
-
     try {
       const result = await api('admin.users.list', { token: TOKEN });
       const users = result.users || [];
-
-      if (users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4">Nenhum usuário cadastrado.</td></tr>';
+      if (!users.length) {
+        tbody.innerHTML = '<tr><td colspan="4">Nenhum usuário.</td></tr>';
         return;
       }
-
       tbody.innerHTML = '';
       users.forEach((u) => {
         const tr = document.createElement('tr');
@@ -356,8 +319,7 @@ const App = (() => {
           <td>
             <button class="btn btn-sm" onclick="App.resetUserPassword('${u.username}')">Reset senha</button>
             <button class="btn btn-sm btn-danger" onclick="App.deleteUser('${u.username}')">Excluir</button>
-          </td>
-        `;
+          </td>`;
         tbody.appendChild(tr);
       });
     } catch (e) {
@@ -369,29 +331,38 @@ const App = (() => {
     setMsg('admUsersMsg', '');
     const btn = $('btnSaveUser');
     if (btn) { btn.disabled = true; btn.textContent = 'Salvando...'; }
-
     try {
       const username = $('admUsername').value.trim();
       const nome = $('admNome').value.trim();
       const email = $('admEmail').value.trim();
       const role = $('admRole').value;
-
-      if (!username || !nome || !email) {
-        throw new Error('Preencha usuário, nome e email.');
-      }
-
-      await api('admin.users.upsert', {
-        token: TOKEN,
-        payload: { username, nome, email, role },
-      });
-
+      if (!username || !nome || !email) throw new Error('Preencha usuário, nome e email.');
+      await api('admin.users.upsert', { token: TOKEN, payload: { username, nome, email, role } });
       $('admUsername').value = '';
       $('admNome').value = '';
       $('admEmail').value = '';
       $('admRole').value = 'USER';
-
       setMsg('admUsersMsg', 'Usuário salvo. Senha padrão: user123', true);
       await loadAdminUsers();
     } catch (e) {
       setMsg('admUsersMsg', e.message || String(e));
-    
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = 'Salvar usuário'; }
+    }
+  }
+
+  async function resetUserPassword(username) {
+    if (!confirm(`Resetar senha de "${username}" para user123?`)) return;
+    try {
+      await api('admin.users.resetPassword', { token: TOKEN, username });
+      setMsg('admUsersMsg', `Senha de ${username} resetada para user123.`, true);
+    } catch (e) {
+      setMsg('admUsersMsg', e.message || String(e));
+    }
+  }
+
+  async function deleteUser(username) {
+    if (!confirm(`Excluir usuário "${username}"? Esta ação não pode ser desfeita.`)) return;
+    try {
+      await api('admin.users.delete', { token: TOKEN, username });
+      setMsg('admUsersMsg', `Usuário ${username} exclu
