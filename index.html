@@ -9,18 +9,23 @@
 
     <title>CFO</title>
 
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <!-- Estilos -->
     <link rel="stylesheet" href="style.css">
   </head>
 
   <body>
-    <!-- Topbar -->
-    <div class="topbar">
-      <div class="brand" id="brandTitle">
-        Controle Financeiro de Obras
+    <!-- Topo / usuário -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <div class="brand" id="brandTitle">
+          Controle Financeiro de Obras
+        </div>
       </div>
 
-      <div class="rightTop">
+      <div class="topbar-right">
         <div id="pillUser" class="pill hidden"></div>
 
         <button
@@ -31,7 +36,7 @@
           Sair
         </button>
       </div>
-    </div>
+    </header>
 
     <!-- Área de Login -->
     <section id="loginArea" class="wrap">
@@ -111,7 +116,8 @@
     </section>
 
     <!-- Área principal da aplicação -->
-    <section id="appArea" class="main hidden">
+    <main id="appArea" class="main hidden">
+      <!-- Coluna esquerda: lançamento de despesas -->
       <div class="left">
         <div class="card">
           <h3>Lançar despesa</h3>
@@ -157,14 +163,12 @@
         </div>
       </div>
 
+      <!-- Coluna direita: dashboard -->
       <div class="right">
         <!-- Filtros / topo do dashboard -->
         <div class="card">
-          <div
-            class="row"
-            style="align-items: flex-end;"
-          >
-            <div>
+          <div class="row row-filters">
+            <div class="filter-month">
               <label for="fMes">Mês</label>
               <input
                 id="fMes"
@@ -173,13 +177,7 @@
               >
             </div>
 
-            <div
-              style="
-                display: flex;
-                justify-content: flex-end;
-                gap: 10px;
-              "
-            >
+            <div class="filter-actions">
               <button
                 class="btn btn-primary"
                 onclick="App.printPdf()"
@@ -245,7 +243,7 @@
         </div>
 
         <!-- Área de administração -->
-        <div id="adminArea" class="card hidden">
+        <section id="adminArea" class="card hidden">
           <h3>Administração</h3>
 
           <div class="tabs">
@@ -292,10 +290,11 @@
           <div id="adm_month" class="adm hidden"></div>
 
           <div id="admMsg" class="msg"></div>
-        </div>
+        </section>
       </div>
-    </section>
+    </main>
 
+    <!-- Script principal -->
     <script src="app.js"></script>
   </body>
 </html>
