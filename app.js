@@ -114,20 +114,16 @@ const App = (() => {
     if (btnLogout) btnLogout.classList.remove('hidden');
   }
 
-  function applyRoleUI() {
-    const isAdmin = USER && USER.role === 'ADMIN';
+ function applyRoleUI() {
+  const isAdmin = USER && USER.role === 'ADMIN';
+  const adminArea = $('adminArea');
 
-    const btnAdmin = $('btnAdmin');
-    const adminArea = $('adminArea');
-
-    if (isAdmin) {
-      if (btnAdmin) btnAdmin.classList.remove('hidden');
-    } else {
-      if (btnAdmin) btnAdmin.classList.add('hidden');
-      if (adminArea) adminArea.classList.add('hidden');
-    }
+  if (isAdmin) {
+    if (adminArea) adminArea.classList.remove('hidden');
+  } else {
+    if (adminArea) adminArea.classList.add('hidden');
   }
-
+}
   // --------- Autenticação ---------
   async function login() {
     setMsg('loginMsg', '');
