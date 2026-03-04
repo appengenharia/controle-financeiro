@@ -1,205 +1,268 @@
 <!doctype html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>CFO</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <link rel="stylesheet" href="style.css">
-  </head>
-  <body>
-    <header class="topbar">
-      <div class="topbar-left">
-        <div class="brand">Controle Financeiro de Obras</div>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CFO</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="brand">Controle Financeiro de Obras</div>
+    </div>
+    <div class="topbar-right">
+      <div id="pillUser" class="pill hidden"></div>
+      <button id="btnLogout" class="btn btn-ghost hidden" onclick="App.logout()">Sair</button>
+    </div>
+  </header>
+
+  <section id="loginArea" class="wrap">
+    <div class="card">
+      <h2>Login</h2>
+      <label for="loginRole">Perfil</label>
+      <select id="loginRole">
+        <option value="USER">Usuário</option>
+        <option value="ADMIN">Administrador</option>
+      </select>
+      <label for="loginUser">Usuário</label>
+      <input id="loginUser">
+      <label for="loginPass">Senha</label>
+      <div class="passRow">
+        <input id="loginPass" type="password">
+        <button class="eyeBtn" type="button" onclick="App.togglePass('loginPass')">&#128065;</button>
       </div>
-      <div class="topbar-right">
-        <div id="pillUser" class="pill hidden"></div>
-        <button id="btnLogout" class="btn btn-ghost hidden" onclick="App.logout()">Sair</button>
+      <button id="btnLogin" class="btn btn-primary full" onclick="App.login()">Entrar</button>
+      <div id="loginMsg" class="msg"></div>
+    </div>
+  </section>
+
+  <section id="pwArea" class="wrap hidden">
+    <div class="card">
+      <h2>Trocar senha</h2>
+      <p class="hint">Primeiro acesso. Defina sua nova senha.</p>
+      <label for="pw1">Nova senha</label>
+      <div class="passRow">
+        <input id="pw1" type="password">
+        <button class="eyeBtn" type="button" onclick="App.togglePass('pw1')">&#128065;</button>
       </div>
-    </header>
-    <section id="loginArea" class="wrap">
+      <label for="pw2">Confirmar</label>
+      <div class="passRow">
+        <input id="pw2" type="password">
+        <button class="eyeBtn" type="button" onclick="App.togglePass('pw2')">&#128065;</button>
+      </div>
+      <button id="btnSavePw" class="btn btn-primary full" onclick="App.changePassword()">Salvar</button>
+      <div id="pwMsg" class="msg"></div>
+    </div>
+  </section>
+
+  <main id="appArea" class="main hidden">
+
+    <div class="left">
+
       <div class="card">
-        <h2>Login</h2>
-        <label for="loginRole">Perfil</label>
-        <select id="loginRole">
-          <option value="USER">Usuário</option>
-          <option value="ADMIN">Administrador</option>
-        </select>
-        <label for="loginUser">Usuário</label>
-        <input id="loginUser">
-        <label for="loginPass">Senha</label>
-        <div class="passRow">
-          <input id="loginPass" type="password">
-          <button class="eyeBtn" type="button" onclick="App.togglePass('loginPass')">&#128065;</button>
+        <h3>Lançar despesa</h3>
+        <label for="obraSelect">Obra</label>
+        <select id="obraSelect" onchange="App.onChangeObra()"></select>
+        <label for="inpData">Data</label>
+        <input id="inpData" type="date">
+        <label for="inpCat">Categoria</label>
+        <select id="inpCat"></select>
+        <label for="inpDet">Detalhes</label>
+        <input id="inpDet">
+        <div class="row">
+          <div>
+            <label for="inpVal">Valor (R$)</label>
+            <input id="inpVal" inputmode="decimal" placeholder="0,00">
+          </div>
+          <div>
+            <label for="inpReemb">Reembolsável</label>
+            <select id="inpReemb">
+              <option value="SIM">SIM</option>
+              <option value="NAO">NÃO</option>
+            </select>
+          </div>
         </div>
-        <button id="btnLogin" class="btn btn-primary full" onclick="App.login()">Entrar</button>
-        <div id="loginMsg" class="msg"></div>
+        <button id="btnSaveExpense" class="btn btn-primary full" onclick="App.registerExpense()">Registrar</button>
+        <div id="msg" class="msg"></div>
       </div>
-    </section>
-    <section id="pwArea" class="wrap hidden">
-      <div class="card">
-        <h2>Trocar senha</h2>
-        <p class="hint">Primeiro acesso detectado. Defina sua nova senha.</p>
-        <label for="pw1">Nova senha</label>
-        <div class="passRow">
-          <input id="pw1" type="password">
-          <button class="eyeBtn" type="button" onclick="App.togglePass('pw1')">&#128065;</button>
+
+      <section id="adminArea" class="card hidden">
+        <h3>Administração</h3>
+        <div class="tabs">
+          <button id="tab_users" class="tab" onclick="App.adminTab('users')">Usuários</button>
+          <button id="tab_works" class="tab" onclick="App.adminTab('works')">Obras</button>
+          <button id="tab_alloc" class="tab" onclick="App.adminTab('alloc')">Alocação</button>
+          <button id="tab_emails" class="tab" onclick="App.adminTab('emails')">Emails</button>
+          <button id="tab_config" class="tab" onclick="App.adminTab('config')">Config</button>
+          <button id="tab_month" class="tab" onclick="App.adminTab('month')">Fechamento</button>
         </div>
-        <label for="pw2">Confirmar</label>
-        <div class="passRow">
-          <input id="pw2" type="password">
-          <button class="eyeBtn" type="button" onclick="App.togglePass('pw2')">&#128065;</button>
-        </div>
-        <button id="btnSavePw" class="btn btn-primary full" onclick="App.changePassword()">Salvar</button>
-        <div id="pwMsg" class="msg"></div>
-      </div>
-    </section>
-    <main id="appArea" class="main hidden">
-      <div class="left">
-        <div class="card">
-          <h3>Lançar despesa</h3>
-          <label for="obraSelect">Obra</label>
-          <select id="obraSelect" onchange="App.onChangeObra()"></select>
-          <label for="inpData">Data</label>
-          <input id="inpData" type="date">
-          <label for="inpCat">Categoria</label>
-          <select id="inpCat"></select>
-          <label for="inpDet">Detalhes</label>
-          <input id="inpDet">
-          <div class="row">
-            <div>
-              <label for="inpVal">Valor (R$)</label>
-              <input id="inpVal" inputmode="decimal" placeholder="0,00">
-            </div>
-            <div>
-              <label for="inpReemb">Reembolsável</label>
-              <select id="inpReemb">
-                <option value="SIM">SIM</option>
-                <option value="NAO">NÃO</option>
-              </select>
-            </div>
-          </div>
-          <button id="btnSaveExpense" class="btn btn-primary full" onclick="App.registerExpense()">Registrar</button>
-          <div id="msg" class="msg"></div>
-        </div>
-        <section id="adminArea" class="card hidden">
-          <h3>Administração</h3>
-          <div class="tabs">
-            <button id="tab_users" class="tab" onclick="App.adminTab('users')">Usuários</button>
-            <button id="tab_works" class="tab" onclick="App.adminTab('works')">Obras</button>
-            <button id="tab_alloc" class="tab" onclick="App.adminTab('alloc')">Alocação</button>
-            <button id="tab_emails" class="tab" onclick="App.adminTab('emails')">Emails</button>
-            <button id="tab_config" class="tab" onclick="App.adminTab('config')">Config</button>
-            <button id="tab_month" class="tab" onclick="App.adminTab('month')">Fechamento</button>
-          </div>
-          <div id="adm_users" class="adm hidden">
-            <h4>Cadastro de usuário</h4>
-            <div class="row">
-              <div><label>Usuário</label><input id="admUsername" placeholder="login"></div>
-              <div><label>Nome completo</label><input id="admNome" placeholder="Nome"></div>
-            </div>
-            <div class="row">
-              <div><label>Email</label><input id="admEmail" type="email" placeholder="email@exemplo.com"></div>
-              <div><label>Perfil</label><select id="admRole"><option value="USER">Usuário</option><option value="ADMIN">Administrador</option></select></div>
-            </div>
-            <button id="btnSaveUser" class="btn btn-primary" onclick="App.saveAdminUser()">Salvar usuário</button>
-            <div id="admUsersMsg" class="msg"></div>
-            <h4>Usuários cadastrados</h4>
-            <table>
-              <thead><tr><th>Usuário</th><th>Nome</th><th>Perfil</th><th>Ações</th></tr></thead>
-              <tbody id="admUsersTbody"></tbody>
-            </table>
-          </div>
-          <div id="adm_works" class="adm hidden">
-            <h4>Cadastro de obra</h4>
-            <div class="row">
-              <div><label>ID da obra</label><input id="admWorkId" placeholder="ex: OB001"></div>
-              <div><label>Nome da obra</label><input id="admWorkNome" placeholder="Descrição"></div>
-            </div>
-            <button id="btnSaveWork" class="btn btn-primary" onclick="App.saveAdminWork()">Salvar obra</button>
-            <div id="admWorksMsg" class="msg"></div>
-            <h4>Obras cadastradas</h4>
-            <table>
-              <thead><tr><th>ID</th><th>Nome</th><th>Ações</th></tr></thead>
-              <tbody id="admWorksTbody"></tbody>
-            </table>
-          </div>
-          <div id="adm_alloc" class="adm hidden">
-            <h4>Alocar usuário em obra</h4>
-            <div class="row">
-              <div><label>Usuário</label><input id="admAllocUser" placeholder="login do usuário"></div>
-              <div><label>Obra</label><input id="admAllocObra" placeholder="ID da obra"></div>
-            </div>
-            <button id="btnSaveAlloc" class="btn btn-primary" onclick="App.saveAdminAlloc()">Alocar</button>
-            <div id="admAllocMsg" class="msg"></div>
-            <h4>Alocações ativas</h4>
-            <table>
-              <thead><tr><th>Usuário</th><th>Obra</th><th>Ações</th></tr></thead>
-              <tbody id="admAllocTbody"></tbody>
-            </table>
-          </div>
-          <div id="adm_emails" class="adm hidden">
-            <h4>Emails para relatório</h4>
-            <p class="hint">Separe múltiplos emails por vírgula.</p>
-            <label>Emails</label>
-            <input id="admEmailsList" placeholder="email1@ex.com, email2@ex.com">
-            <button id="btnSaveEmails" class="btn btn-primary" onclick="App.saveAdminEmails()">Salvar emails</button>
-            <div id="admEmailsMsg" class="msg"></div>
-          </div>
-          <div id="adm_config" class="adm hidden">
-            <h4>Configurações gerais</h4>
-            <label>Nome da empresa</label>
-            <input id="admEmpresa" placeholder="Razão social ou nome fantasia">
-            <label>URL do logo</label>
-            <input id="admLogoUrl" placeholder="https://...">
-            <button id="btnSaveConfig" class="btn btn-primary" onclick="App.saveAdminConfig()">Salvar config</button>
-            <div id="admConfigMsg" class="msg"></div>
-          </div>
-          <div id="adm_month" class="adm hidden">
-            <h4>Fechamento de mês</h4>
-            <div class="row">
-              <div><label>Mês</label><input id="admMonthRef" type="month"></div>
-              <div><label>Obra (vazio = todas)</label><input id="admMonthObra" placeholder="ID da obra"></div>
-            </div>
-            <div class="row">
-              <div><button id="btnCloseMonth" class="btn btn-primary full" onclick="App.closeMonth()">Fechar mês</button></div>
-              <div><button id="btnReopenMonth" class="btn full" onclick="App.reopenMonth()">Reabrir mês</button></div>
-            </div>
-            <div id="admMonthMsg" class="msg"></div>
-          </div>
-        </section>
-      </div>
-      <div class="right">
-        <div class="card">
-          <div class="row row-filters">
-            <div class="filter-month">
-              <label for="fMes">Mês</label>
-              <input id="fMes" type="month" onchange="App.refreshAll()">
-            </div>
-            <div class="filter-actions">
-              <button id="btnPrintPdf" class="btn btn-primary" onclick="App.printPdf()">Imprimir PDF</button>
-            </div>
-          </div>
-        </div>
-        <div class="kpis">
-          <div class="kpi"><div class="t">Total</div><div id="kTotal" class="v">R$ 0,00</div></div>
-          <div class="kpi"><div class="t">Maior categoria</div><div id="kTop" class="v">-</div></div>
-          <div class="kpi"><div class="t">Menor categoria</div><div id="kBottom" class="v">-</div></div>
-          <div class="kpi"><div class="t">Status</div><div id="kStatus" class="v">-</div></div>
-        </div>
-        <div class="card">
-          <h3>Evolução diária</h3>
-          <canvas id="chartLine" height="140"></canvas>
-        </div>
-        <div class="card">
-          <h3>Resumo por categoria</h3>
+
+        <div id="adm_users" class="adm hidden">
+          <h4>Cadastro de usuário</h4>
+          <label>Usuário (login)</label>
+          <input id="admUsername" placeholder="ex: joao">
+          <label>Nome completo</label>
+          <input id="admNome" placeholder="João Silva">
+          <label>Email</label>
+          <input id="admEmail" type="email" placeholder="email@exemplo.com">
+          <label>Perfil</label>
+          <select id="admRole">
+            <option value="USER">Usuário</option>
+            <option value="ADMIN">Administrador</option>
+          </select>
+          <button id="btnSaveUser" class="btn btn-primary" onclick="App.saveAdminUser()">Salvar usuário</button>
+          <div id="admUsersMsg" class="msg"></div>
+          <h4>Usuários cadastrados</h4>
           <table>
-            <thead><tr><th>Categoria</th><th>Total</th></tr></thead>
-            <tbody id="tbResumo"></tbody>
+            <thead>
+              <tr>
+                <th>Usuário</th>
+                <th>Nome</th>
+                <th>Perfil</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="admUsersTbody"></tbody>
           </table>
         </div>
+
+        <div id="adm_works" class="adm hidden">
+          <h4>Cadastro de obra</h4>
+          <label>ID da obra</label>
+          <input id="admWorkId" placeholder="ex: OB001">
+          <label>Nome da obra</label>
+          <input id="admWorkNome" placeholder="Descrição">
+          <button id="btnSaveWork" class="btn btn-primary" onclick="App.saveAdminWork()">Salvar obra</button>
+          <div id="admWorksMsg" class="msg"></div>
+          <h4>Obras cadastradas</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="admWorksTbody"></tbody>
+          </table>
+        </div>
+
+        <div id="adm_alloc" class="adm hidden">
+          <h4>Alocar usuário em obra</h4>
+          <label>Usuário (login)</label>
+          <input id="admAllocUser" placeholder="login do usuário">
+          <label>ID da obra</label>
+          <input id="admAllocObra" placeholder="ex: OB001">
+          <button id="btnSaveAlloc" class="btn btn-primary" onclick="App.saveAdminAlloc()">Alocar</button>
+          <div id="admAllocMsg" class="msg"></div>
+          <h4>Alocações ativas</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>Usuário</th>
+                <th>Obra</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="admAllocTbody"></tbody>
+          </table>
+        </div>
+
+        <div id="adm_emails" class="adm hidden">
+          <h4>Emails para relatório</h4>
+          <p class="hint">Separe múltiplos emails por vírgula.</p>
+          <label>Emails</label>
+          <input id="admEmailsList" placeholder="email1@ex.com, email2@ex.com">
+          <button id="btnSaveEmails" class="btn btn-primary" onclick="App.saveAdminEmails()">Salvar emails</button>
+          <div id="admEmailsMsg" class="msg"></div>
+        </div>
+
+        <div id="adm_config" class="adm hidden">
+          <h4>Configurações gerais</h4>
+          <label>Nome da empresa</label>
+          <input id="admEmpresa" placeholder="Razão social ou nome fantasia">
+          <label>URL do logo</label>
+          <input id="admLogoUrl" placeholder="https://...">
+          <button id="btnSaveConfig" class="btn btn-primary" onclick="App.saveAdminConfig()">Salvar config</button>
+          <div id="admConfigMsg" class="msg"></div>
+        </div>
+
+        <div id="adm_month" class="adm hidden">
+          <h4>Fechamento de mês</h4>
+          <label>Mês</label>
+          <input id="admMonthRef" type="month">
+          <label>Obra (deixe vazio para todas)</label>
+          <input id="admMonthObra" placeholder="ID da obra">
+          <div class="row">
+            <div>
+              <button id="btnCloseMonth" class="btn btn-primary full" onclick="App.closeMonth()">Fechar mês</button>
+            </div>
+            <div>
+              <button id="btnReopenMonth" class="btn full" onclick="App.reopenMonth()">Reabrir mês</button>
+            </div>
+          </div>
+          <div id="admMonthMsg" class="msg"></div>
+        </div>
+
+      </section>
+    </div>
+
+    <div class="right">
+      <div class="card">
+        <div class="row row-filters">
+          <div class="filter-month">
+            <label for="fMes">Mês</label>
+            <input id="fMes" type="month" onchange="App.refreshAll()">
+          </div>
+          <div class="filter-actions">
+            <button id="btnPrintPdf" class="btn btn-primary" onclick="App.printPdf()">Imprimir PDF</button>
+          </div>
+        </div>
       </div>
-    </main>
-    <script src="app.js"></script>
-  </body>
+
+      <div class="kpis">
+        <div class="kpi">
+          <div class="t">Total</div>
+          <div id="kTotal" class="v">R$ 0,00</div>
+        </div>
+        <div class="kpi">
+          <div class="t">Maior categoria</div>
+          <div id="kTop" class="v">-</div>
+        </div>
+        <div class="kpi">
+          <div class="t">Menor categoria</div>
+          <div id="kBottom" class="v">-</div>
+        </div>
+        <div class="kpi">
+          <div class="t">Status</div>
+          <div id="kStatus" class="v">-</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Evolução diária</h3>
+        <canvas id="chartLine" height="140"></canvas>
+      </div>
+
+      <div class="card">
+        <h3>Resumo por categoria</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Categoria</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody id="tbResumo"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
 </html>
