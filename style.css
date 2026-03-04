@@ -1,7 +1,9 @@
 body {
-  font-family: system-ui;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    sans-serif;
   margin: 0;
   background: #f3f6fb;
+  color: #0b2a4a;
 }
 
 .hidden {
@@ -80,6 +82,7 @@ select {
   border-radius: 14px;
   padding: 12px;
   font-size: 15px;
+  box-sizing: border-box;
 }
 
 .row {
@@ -118,6 +121,24 @@ select {
   border-radius: 14px;
   font-weight: 800;
   cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s ease, transform 0.05s ease,
+    box-shadow 0.05s ease;
+}
+
+.btn:hover:not(:disabled) {
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
+  transform: translateY(-1px);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .btn-primary {
@@ -130,6 +151,30 @@ select {
   background: transparent;
   border-color: rgba(255, 255, 255, 0.25);
   color: #fff;
+}
+
+.full {
+  width: 100%;
+}
+
+/* Login / senha */
+
+.passRow {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+
+.passRow input {
+  flex: 1;
+}
+
+.eyeBtn {
+  border: 1px solid #e4eaf2;
+  background: #fff;
+  border-radius: 12px;
+  padding: 0 10px;
+  cursor: pointer;
 }
 
 /* KPIs */
@@ -146,6 +191,12 @@ select {
   color: #fff;
   border-radius: 18px;
   padding: 14px;
+}
+
+.kpi .t {
+  font-size: 13px;
+  text-transform: uppercase;
+  opacity: 0.8;
 }
 
 .kpi .v {
@@ -180,6 +231,41 @@ td {
 td:last-child,
 th:last-child {
   text-align: right;
+}
+
+/* Mensagens */
+
+.msg {
+  margin-top: 8px;
+  font-size: 14px;
+  min-height: 18px;
+  color: #b00020;
+}
+
+.msg.ok {
+  color: #0a7f2e;
+}
+
+/* Admin */
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.tab {
+  border: 1px solid #e4eaf2;
+  background: #f5f7fb;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.adm {
+  margin-top: 10px;
 }
 
 /* =========================
