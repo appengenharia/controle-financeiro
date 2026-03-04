@@ -122,6 +122,25 @@ const App = (() => {
         role,
         username,
         password,
+        const pillUser = $('pillUser');
+if (pillUser) {
+  pillUser.textContent = `${USER.role} • ${USER.username}`;
+  pillUser.classList.remove('hidden');
+}
+
+const btnLogout = $('btnLogout');
+if (btnLogout) {
+  btnLogout.classList.remove('hidden');
+}
+
+// Ajusta botão Admin conforme o perfil
+if (USER.role === 'ADMIN') {
+  $('btnAdmin').classList.remove('hidden');
+} else {
+  $('btnAdmin').classList.add('hidden');
+  $('adminArea').classList.add('hidden');
+}
+
       });
 
       TOKEN = result.token;
