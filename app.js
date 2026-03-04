@@ -2,7 +2,7 @@
 // Configuração da API
 // =========================
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbzILvsQK2SBM8yUKhlaX8pMdbUO6vU5ywc5ON_bt0sw1cGFyViWxv0AHadN7XpmUySmGA/exec'; // coloque aqui a URL /exec do Apps Script via worker
+const API_URL = 'https://script.google.com/macros/s/AKfycbzILvsQK2SBM8yUKhlaX8pMdbUO6vU5ywc5ON_bt0sw1cGFyViWxv0AHadN7XpmUySmGA/exec';
 
 // =========================
 // Módulo principal da aplicação (IIFE)
