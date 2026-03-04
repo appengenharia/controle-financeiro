@@ -146,13 +146,39 @@ const App = (() => {
         return;
       }
 
-      await initApp();
-    } catch (e) {
-      setMsg('loginMsg', e.message || String(e));
-    } finally {
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = 'Entrar';
+      async function initApp() {
+  const init = await api('app.init', { token: TOKEN });
+
+  WORKS = init.works || WORKS;
+  CATEGORIAS = init.categorias || CATEGORIAS;
+
+  currentObraId = init.primaryObraId || (WORKS[0]?.obra_id || '');
+
+  fillWorks();
+  fillCats();
+
+  const monthRef = init.initialMonthRef || currentMonth();
+  $('fMes').value = monthRef;
+
+  $('loginArea').classList.add('hidden');
+  $('pwArea').classList.add('hidden');
+  $('appArea').classList.remove('hidden');
+
+  // Controle de UI por perfil
+  if (USER.role === 'ADMIN') {
+    $('btnAdmin').classList.remove('hidden');
+  } else {
+    $('btnAdmin').classList.add('hidden');
+    $('adminArea').classList.add('hidden');
+  }
+
+  if (init.initialSummary && init.initialSeries && currentObraId) {
+    applySummaryAndSeries(init.initialSummary, init.initialSeries);
+  } else {
+    refreshAll();
+  }
+}
+
       }
     }
   }
