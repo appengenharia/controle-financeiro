@@ -2,7 +2,7 @@
 // Configuração da API
 // =========================
 
-const API_URL = 'https://twilight-firefly-1225.josimar-rrocha.workers.dev'; // coloque aqui a URL /exec do Apps Script via worker
+const API_URL = 'https://script.google.com/macros/s/SEU_ID/exec'; // coloque aqui a URL /exec do Apps Script via worker
 
 // =========================
 // Módulo principal da aplicação (IIFE)
