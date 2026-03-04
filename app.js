@@ -345,4 +345,242 @@ const App = (() => {
           <span class="liBadge ${u.role === "ADMIN" ? "admin" : ""}">${u.role}</span>
           <div class="liActions">
             <button class="btn btn-sm btn-secondary" onclick="App.adminResetPass('${u.username}')">Reset senha</button>
+              // ── ADMIN: USUÁRIOS ──
+  async function renderUsers() {
+    try {
+      const list = await api("admin.users.list", { token: TOKEN });
+      const el = $("userList");
+      if (!el) return;
+      el.innerHTML = list.map(u => `
+        <div class="listItem">
+          <span class="liName">${u.username}</span>
+          <span style="color:var(--muted);font-size:.82rem">${u.nome || ""}</span>
+          <span class="liBadge ${u.role === "ADMIN" ? "admin" : ""}">${u.role}</span>
+          <div class="liActions">
+            <button class="btn btn-sm btn-secondary" onclick="App.adminResetPass('${u.username}')">Reset</button>
+          </div>
+        </div>`).join("");
+    } catch (e) { setMsg("admMsg", e.message); }
+  }
+
+  async function adminUserUpsert() {
+    try {
+      const user = {
+        username: $("au_user").value.trim(),
+        nome: $("au_nome").value.trim(),
+        role: $("au_role").value,
+        email: $("au_email").value.trim(),
+        ativo: true
+      };
+      if (!user.username) throw new Error("Informe o username.");
+      await api("admin.users.upsert", { token: TOKEN, user });
+      $("au_user").value = ""; $("au_nome").value = ""; $("au_email").value = "";
+      setMsg("admMsg", "✅ Usuário salvo!", true);
+      await renderUsers();
+    } catch (e) { setMsg("admMsg", e.message); }
+  }
+
+  async function adminResetPass(username) {
+    try {
+      await api("admin.users.resetPassword", { token: TOKEN, username });
+      setMsg("admMsg", `✅ Senha de "${username}" resetada para user123`, true);
+    } catch (e) { setMsg("admMsg", e.message); }
+  }
+
+  // ── ADMIN: OBRAS ──
+  async function renderWorks() {
+    try {
+      const list = await api("admin.works.list", { token: TOKEN });
+      const el = $("workList");
+      if (!el) return;
+      el.innerHTML = list.map(w => `
+        <div class="listItem">
+          <span class="liName">${w.obra_id}</span>
+          <span style="color:var(--muted);font-size:.82rem">${w.obra_nome}</span>
+          <span class="liBadge ${w.ativa ? "" : "admin"}">${w.ativa ? "Ativa" : "Inativa"}</span>
+        </div>`).join("");
+    } catch (e) { setMsg("admMsg", e.message); }
+  }
+
+  async function adminWorkUpsert() {
+    try {
+      const work = {
+        obra_id: $("aw_id").value.trim(),
+        obra_nome: $("aw_nome").value.trim(),
+        ativa: $("aw_ativa").value === "true"
+      };
+      if (!work.obra_id || !work.obra_nome) throw new Error("Preencha ID e Nome da obra.");
+      await api("admin.works.upsert", { token: TOKEN, work });
+      $("aw_id").value = ""; $("aw_nome").value = "";
+      setMsg("admMsg", "✅ Obra salva!", true);
+      await renderWorks();
+    } catch (e) { setMsg("admMsg", e.message); }
+  }
+
+  // ── ADMIN: EMAILS ──
+  async function renderEmails() {
+    try {
+      const list = await api("admin.emails.list", { token: TOKEN });
+      const el = $("emailList");
+      if (!el) return;
+      el.innerHTML = list.map(e => `
+        <div class="listItem">
+          <span class="liName">${e.email}</span>
+          <span style="color:var(--muted);font-size:.82rem">${e.nome || ""}</span>
+          <div class="liActions">
+            <button class="btn btn-sm btn-danger" onclick="App.adminEmailRemove('${e.email}')">Remover</button>
+          </div>
+        </div>`).join("");
+    } catch (e) { setMsg("admMsg", e.message); }
+  }
+
+  async function adminEmailUpsert() {
+    try {
+      const email = $("ae_email").value.trim();
+      const nome = $("ae_nome").value.trim();
+      if (!email) throw new Error("Informe o email.");
+      await api("admin.emails.upsert", { token: TOKEN, entry: { email, nome } });
+      $("ae_email").value = ""; $("ae_nome").value = "";
+      setMsg("admMsg", "✅ Email adicionado!", true);
+      await renderEmails();
+    } catch (e) { setMsg("admMsg", e.message); }
+  }
+
+  async function adminEmailRemove(email) {
+    try {
+      await api("admin.emails.remove", { token: TOKEN, email });
+      setMsg("admMsg", "✅ Removido!", true);
+      await renderEmails();
+    } catch (e) { setMsg("admMsg", e.message); }
+  }
+
+  async function sendMonthReport() {
+    setMsg("emailMsg", "");
+    const btn = document.querySelector("#adm_emails .btn-secondary");
+    if (btn) { btn.disabled = true; btn.textContent = "Enviando..."; }
+    try {
+      const monthRef = $("fMes")?.value || currentMonth();
+      await api("admin.emails.sendReport", { token: TOKEN, monthRef });
+      setMsg("emailMsg", "✅ Relatório enviado!", true);
+    } catch (e) { setMsg("emailMsg", e.message); }
+    finally { if (btn) { btn.disabled = false; btn.textContent = "📧 Enviar relatório do mês agora"; } }
+  }
+
+  // ── ADMIN: LOGO / CONFIG ──
+  async function loadConfig() {
+    try {
+      const cfg = await api("admin.config.get", { token: TOKEN });
+      const nameEl = $("cfgName"); if (nameEl) nameEl.value = cfg.name || brand.name || "";
+      const colorEl = $("cfgColor"); if (colorEl) colorEl.value = cfg.color || brand.color || "#0b2a4a";
+      const hexEl = $("cfgColorHex"); if (hexEl) hexEl.textContent = cfg.color || brand.color || "#0b2a4a";
+      const catsEl = $("cfgCats"); if (catsEl) catsEl.value = (cfg.categorias || CATEGORIAS).join("\n");
+      if (cfg.logo_url) {
+        const img = $("logoPreview"); if (img) { img.src = cfg.logo_url; img.classList.remove("hidden"); }
+        const none = $("logoNone"); if (none) none.classList.add("hidden");
+      }
+    } catch (e) { setMsg("cfgMsg", e.message); }
+  }
+
+  function onLogoSelected(file) {
+    if (!file) return;
+    logoSelectedFile = file;
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = $("logoPreview");
+      if (img) { img.src = e.target.result; img.classList.remove("hidden"); }
+      const none = $("logoNone"); if (none) none.classList.add("hidden");
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function saveConfig() {
+    setMsg("cfgMsg", "");
+    const btn = document.querySelector("#adm_logo .btn-primary");
+    if (btn) { btn.disabled = true; btn.textContent = "Salvando..."; }
+    try {
+      const name = $("cfgName").value.trim();
+      const color = $("cfgColor").value;
+      const catsRaw = $("cfgCats").value;
+      const categorias = catsRaw.split("\n").map(c => c.trim()).filter(Boolean);
+      let logo_url = brand.logo_url || "";
+      if (logoSelectedFile) {
+        const b64 = await toBase64(logoSelectedFile);
+        const up = await api("admin.config.uploadLogo", { token: TOKEN, base64: b64, mimeType: logoSelectedFile.type });
+        logo_url = up.url || "";
+      }
+      await api("admin.config.save", { token: TOKEN, config: { name, color, categorias, logo_url } });
+      brand = { ...brand, name, color, logo_url };
+      CATEGORIAS = categorias;
+      applyBrand();
+      fillCategories();
+      setMsg("cfgMsg", "✅ Configurações salvas!", true);
+    } catch (e) { setMsg("cfgMsg", e.message); }
+    finally { if (btn) { btn.disabled = false; btn.textContent = "Salvar configurações"; } }
+  }
+
+  function toBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = e => resolve(e.target.result.split(",")[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // ── ADMIN: FECHAMENTO ──
+  async function renderClosedMonths() {
+    try {
+      const list = await api("admin.months.list", { token: TOKEN });
+      const el = $("closedList");
+      if (!el) return;
+      if (!list.length) { el.innerHTML = '<p class="muted small">Nenhum mês fechado.</p>'; return; }
+      el.innerHTML = list.map(m => `
+        <div class="listItem">
+          <span class="liName">${m.monthRef}</span>
+          <span class="liBadge admin">FECHADO</span>
+          <span style="color:var(--muted);font-size:.78rem">${m.closedAt ? new Date(m.closedAt).toLocaleDateString("pt-BR") : ""}</span>
+        </div>`).join("");
+    } catch (e) { setMsg("admMsg", e.message); }
+  }
+
+  async function closeMonth() {
+    try {
+      const ref = $("monthRef").value;
+      if (!ref) throw new Error("Selecione o mês.");
+      await api("admin.months.close", { token: TOKEN, monthRef: ref });
+      setMsg("admMsg", `✅ Mês ${ref} fechado!`, true);
+      await renderClosedMonths();
+    } catch (e) { setMsg("admMsg", e.message); }
+  }
+
+  async function reopenMonth() {
+    try {
+      const ref = $("monthRef").value;
+      if (!ref) throw new Error("Selecione o mês.");
+      await api("admin.months.reopen", { token: TOKEN, monthRef: ref });
+      setMsg("admMsg", `✅ Mês ${ref} reaberto!`, true);
+      await renderClosedMonths();
+    } catch (e) { setMsg("admMsg", e.message); }
+  }
+
+  // ── INICIALIZAÇÃO ──
+  document.addEventListener("DOMContentLoaded", () => {
+    initOffline();
+    applyBrand();
+  });
+
+  return {
+    login, logout, togglePass, changePassword,
+    mainTab, onChangeObra,
+    registerExpense, refreshAll, printReport,
+    onNotaSelected, clearNota,
+    adminTab,
+    adminUserUpsert, adminResetPass,
+    adminWorkUpsert,
+    adminEmailUpsert, adminEmailRemove, sendMonthReport,
+    onLogoSelected, saveConfig,
+    closeMonth, reopenMonth
+  };
+})();
+
             
