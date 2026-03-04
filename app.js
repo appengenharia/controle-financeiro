@@ -241,3 +241,130 @@ const App = (() => {
   async function adminWorkUpsert(){
     try{
       const work={obra_id:$("aw_id").value.trim(),obra_nome:$("aw_nome").value.trim(),ativa:$("aw_
+   async function adminWorkUpsert(){
+    try{
+      const work={obra_id:$("aw_id").value.trim(),obra_nome:$("aw_nome").value.trim(),ativa:$("aw_ativa").value==="true"};
+      if(!work.obra_id||!work.obra_nome) throw new Error("Preencha ID e Nome.");
+      await api("admin.works.upsert",{token:TOKEN,work});
+      $("aw_id").value="";$("aw_nome").value="";
+      setMsg("admMsg","✅ Obra salva!",true);
+      await renderWorks();
+    }catch(e){ setMsg("admMsg",e.message); }
+  }
+
+  async function renderEmails(){
+    try{
+      const list=await api("admin.emails.list",{token:TOKEN});
+      const el=$("emailList"); if(!el) return;
+      el.innerHTML=list.map(e=>`<div class="listItem"><span class="liName">${e.email}</span><span style="color:var(--muted);font-size:.82rem">${e.nome||""}</span><div class="liActions"><button class="btn btn-sm btn-danger" onclick="App.adminEmailRemove('${e.email}')">Remover</button></div></div>`).join("");
+    }catch(e){ setMsg("admMsg",e.message); }
+  }
+
+  async function adminEmailUpsert(){
+    try{
+      const email=$("ae_email").value.trim(), nome=$("ae_nome").value.trim();
+      if(!email) throw new Error("Informe o email.");
+      await api("admin.emails.upsert",{token:TOKEN,entry:{email,nome}});
+      $("ae_email").value="";$("ae_nome").value="";
+      setMsg("admMsg","✅ Email adicionado!",true);
+      await renderEmails();
+    }catch(e){ setMsg("admMsg",e.message); }
+  }
+
+  async function adminEmailRemove(email){
+    try{ await api("admin.emails.remove",{token:TOKEN,email}); setMsg("admMsg","✅ Removido!",true); await renderEmails(); }
+    catch(e){ setMsg("admMsg",e.message); }
+  }
+
+  async function sendMonthReport(){
+    setMsg("emailMsg","");
+    const btn=document.querySelector("#adm_emails .btn-secondary");
+    if(btn){btn.disabled=true;btn.textContent="Enviando...";}
+    try{
+      const monthRef=$("fMes")?.value||currentMonth();
+      await api("admin.emails.sendReport",{token:TOKEN,monthRef});
+      setMsg("emailMsg","✅ Relatório enviado!",true);
+    }catch(e){ setMsg("emailMsg",e.message); }
+    finally{ if(btn){btn.disabled=false;btn.textContent="📧 Enviar relatório do mês agora";} }
+  }
+
+  async function loadConfig(){
+    try{
+      const cfg=await api("admin.config.get",{token:TOKEN});
+      const n=$("cfgName"); if(n) n.value=cfg.name||brand.name||"";
+      const c=$("cfgColor"); if(c) c.value=cfg.color||brand.color||"#0b2a4a";
+      const h=$("cfgColorHex"); if(h) h.textContent=cfg.color||brand.color||"#0b2a4a";
+      const ca=$("cfgCats"); if(ca) ca.value=(cfg.categorias||CATEGORIAS).join("\n");
+      if(cfg.logo_url){ const img=$("logoPreview"); if(img){img.src=cfg.logo_url;img.classList.remove("hidden");} const none=$("logoNone"); if(none) none.classList.add("hidden"); }
+    }catch(e){ setMsg("cfgMsg",e.message); }
+  }
+
+  function onLogoSelected(file){
+    if(!file) return; logoSelectedFile=file;
+    const reader=new FileReader();
+    reader.onload=e=>{ const img=$("logoPreview"); if(img){img.src=e.target.result;img.classList.remove("hidden");} const none=$("logoNone"); if(none) none.classList.add("hidden"); };
+    reader.readAsDataURL(file);
+  }
+
+  function toBase64(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=e=>res(e.target.result.split(",")[1]); r.onerror=rej; r.readAsDataURL(file); }); }
+
+  async function saveConfig(){
+    setMsg("cfgMsg","");
+    const btn=document.querySelector("#adm_logo .btn-primary");
+    if(btn){btn.disabled=true;btn.textContent="Salvando...";}
+    try{
+      const name=$("cfgName").value.trim();
+      const color=$("cfgColor").value;
+      const categorias=$("cfgCats").value.split("\n").map(c=>c.trim()).filter(Boolean);
+      let logo_url=brand.logo_url||"";
+      if(logoSelectedFile){ const b64=await toBase64(logoSelectedFile); const up=await api("admin.config.uploadLogo",{token:TOKEN,base64:b64,mimeType:logoSelectedFile.type}); logo_url=up.url||""; }
+      await api("admin.config.save",{token:TOKEN,config:{name,color,categorias,logo_url}});
+      brand={...brand,name,color,logo_url}; CATEGORIAS=categorias; applyBrand(); fillCategories();
+      setMsg("cfgMsg","✅ Configurações salvas!",true);
+    }catch(e){ setMsg("cfgMsg",e.message); }
+    finally{ if(btn){btn.disabled=false;btn.textContent="Salvar configurações";} }
+  }
+
+  async function renderClosedMonths(){
+    try{
+      const list=await api("admin.months.list",{token:TOKEN});
+      const el=$("closedList"); if(!el) return;
+      if(!list.length){el.innerHTML='<p class="muted small">Nenhum mês fechado.</p>';return;}
+      el.innerHTML=list.map(m=>`<div class="listItem"><span class="liName">${m.monthRef}</span><span class="liBadge admin">FECHADO</span><span style="color:var(--muted);font-size:.78rem">${m.closedAt?new Date(m.closedAt).toLocaleDateString("pt-BR"):""}</span></div>`).join("");
+    }catch(e){ setMsg("admMsg",e.message); }
+  }
+
+  async function closeMonth(){
+    try{
+      const ref=$("monthRef").value; if(!ref) throw new Error("Selecione o mês.");
+      await api("admin.months.close",{token:TOKEN,monthRef:ref});
+      setMsg("admMsg",`✅ Mês ${ref} fechado!`,true);
+      await renderClosedMonths();
+    }catch(e){ setMsg("admMsg",e.message); }
+  }
+
+  async function reopenMonth(){
+    try{
+      const ref=$("monthRef").value; if(!ref) throw new Error("Selecione o mês.");
+      await api("admin.months.reopen",{token:TOKEN,monthRef:ref});
+      setMsg("admMsg",`✅ Mês ${ref} reaberto!`,true);
+      await renderClosedMonths();
+    }catch(e){ setMsg("admMsg",e.message); }
+  }
+
+  document.addEventListener("DOMContentLoaded",()=>{ initOffline(); applyBrand(); });
+
+  return {
+    login, logout, togglePass, changePassword,
+    mainTab, onChangeObra,
+    registerExpense, refreshAll, printReport,
+    onNotaSelected, clearNota,
+    adminTab,
+    adminUserUpsert, adminResetPass,
+    adminWorkUpsert,
+    adminEmailUpsert, adminEmailRemove, sendMonthReport,
+    onLogoSelected, saveConfig,
+    closeMonth, reopenMonth
+  };
+})();
+                                                                                             
