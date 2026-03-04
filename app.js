@@ -2,7 +2,8 @@
 // Configuração da API
 // =========================
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbzILvsQK2SBM8yUKhlaX8pMdbUO6vU5ywc5ON_bt0sw1cGFyViWxv0AHadN7XpmUySmGA/exec';
+const API_URL =
+  'https://script.google.com/macros/s/AKfycbzILvsQK2SBM8yUKhlaX8pMdbUO6vU5ywc5ON_bt0sw1cGFyViWxv0AHadN7XpmUySmGA/exec';
 
 // =========================
 // Módulo principal da aplicação (IIFE)
@@ -29,7 +30,6 @@ const App = (() => {
   const setMsg = (id, text, ok = false) => {
     const el = $(id);
     if (!el) return;
-
     el.className = 'msg ' + (ok ? 'ok' : 'err');
     el.textContent = text || '';
   };
@@ -43,7 +43,7 @@ const App = (() => {
 
   // --------- Comunicação com API ---------
   async function api(action, payload = {}) {
-    if (!API_URL || API_URL.includes('COLE_AQUI')) {
+    if (!API_URL || API_URL.includes('SEU_ID')) {
       throw new Error('Configure a API_URL no app.js.');
     }
 
@@ -103,18 +103,47 @@ const App = (() => {
     });
   }
 
+  function updateUserPill() {
+    const pillUser = $('pillUser');
+    if (!pillUser || !USER) return;
+    const roleLabel = USER.role === 'ADMIN' ? 'ADMIN' : 'USUÁRIO';
+    pillUser.textContent = `${roleLabel} • ${USER.username}`;
+    pillUser.classList.remove('hidden');
+
+    const btnLogout = $('btnLogout');
+    if (btnLogout) btnLogout.classList.remove('hidden');
+  }
+
+  function applyRoleUI() {
+    const isAdmin = USER && USER.role === 'ADMIN';
+
+    const btnAdmin = $('btnAdmin');
+    const adminArea = $('adminArea');
+
+    if (isAdmin) {
+      if (btnAdmin) btnAdmin.classList.remove('hidden');
+    } else {
+      if (btnAdmin) btnAdmin.classList.add('hidden');
+      if (adminArea) adminArea.classList.add('hidden');
+    }
+  }
+
   // --------- Autenticação ---------
   async function login() {
     setMsg('loginMsg', '');
 
-    const btn = $('btnLogin'); // adicione id="btnLogin" no HTML do botão Entrar
+    const btn = $('btnLogin');
     if (btn) {
       btn.disabled = true;
       btn.textContent = 'Entrando...';
     }
 
     try {
-      const role = $('loginRole').value;
+      const roleSelect = $('loginRole').value;
+      const role =
+        roleSelect === 'Administrador' || roleSelect === 'ADMIN'
+          ? 'ADMIN'
+          : 'USER';
       const username = $('loginUser').value.trim();
       const password = $('loginPass').value;
 
@@ -122,25 +151,6 @@ const App = (() => {
         role,
         username,
         password,
-        const pillUser = $('pillUser');
-if (pillUser) {
-  pillUser.textContent = `${USER.role} • ${USER.username}`;
-  pillUser.classList.remove('hidden');
-}
-
-const btnLogout = $('btnLogout');
-if (btnLogout) {
-  btnLogout.classList.remove('hidden');
-}
-
-// Ajusta botão Admin conforme o perfil
-if (USER.role === 'ADMIN') {
-  $('btnAdmin').classList.remove('hidden');
-} else {
-  $('btnAdmin').classList.add('hidden');
-  $('adminArea').classList.add('hidden');
-}
-
       });
 
       TOKEN = result.token;
@@ -148,56 +158,22 @@ if (USER.role === 'ADMIN') {
       WORKS = result.works || [];
       CATEGORIAS = result.categorias || [];
 
-      const pillUser = $('pillUser');
-      if (pillUser) {
-        pillUser.textContent = `${USER.role} • ${USER.username}`;
-        pillUser.classList.remove('hidden');
-      }
+      updateUserPill();
+      applyRoleUI();
 
-      const btnLogout = $('btnLogout');
-      if (btnLogout) {
-        btnLogout.classList.remove('hidden');
-      }
-
-      if (USER.primeiro_acesso) {
+      if (USER.primeiro_acesso && USER.role === 'USER') {
         $('loginArea').classList.add('hidden');
         $('pwArea').classList.remove('hidden');
         return;
       }
 
-      async function initApp() {
-  const init = await api('app.init', { token: TOKEN });
-
-  WORKS = init.works || WORKS;
-  CATEGORIAS = init.categorias || CATEGORIAS;
-
-  currentObraId = init.primaryObraId || (WORKS[0]?.obra_id || '');
-
-  fillWorks();
-  fillCats();
-
-  const monthRef = init.initialMonthRef || currentMonth();
-  $('fMes').value = monthRef;
-
-  $('loginArea').classList.add('hidden');
-  $('pwArea').classList.add('hidden');
-  $('appArea').classList.remove('hidden');
-
-  // Controle de UI por perfil
-  if (USER.role === 'ADMIN') {
-    $('btnAdmin').classList.remove('hidden');
-  } else {
-    $('btnAdmin').classList.add('hidden');
-    $('adminArea').classList.add('hidden');
-  }
-
-  if (init.initialSummary && init.initialSeries && currentObraId) {
-    applySummaryAndSeries(init.initialSummary, init.initialSeries);
-  } else {
-    refreshAll();
-  }
-}
-
+      await initApp();
+    } catch (e) {
+      setMsg('loginMsg', e.message || String(e));
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Entrar';
       }
     }
   }
@@ -205,7 +181,7 @@ if (USER.role === 'ADMIN') {
   async function changePassword() {
     setMsg('pwMsg', '');
 
-    const btn = $('btnSavePw'); // coloque id="btnSavePw" no botão Salvar da troca de senha
+    const btn = $('btnSavePw');
     if (btn) {
       btn.disabled = true;
       btn.textContent = 'Salvando...';
@@ -283,9 +259,7 @@ if (USER.role === 'ADMIN') {
     $('pwArea').classList.add('hidden');
     $('appArea').classList.remove('hidden');
 
-    if (USER.role === 'ADMIN') {
-      $('btnAdmin').classList.remove('hidden');
-    }
+    applyRoleUI();
 
     if (init.initialSummary && init.initialSeries && currentObraId) {
       applySummaryAndSeries(init.initialSummary, init.initialSeries);
@@ -294,6 +268,7 @@ if (USER.role === 'ADMIN') {
     }
   }
 
+  // --------- Aplicar resumo + série no dashboard ---------
   function applySummaryAndSeries(summary, series) {
     $('kTotal').textContent = formatBRL(summary.totalGeral);
     $('kStatus').textContent = summary.isClosed ? 'FECHADO' : 'ABERTO';
@@ -346,7 +321,7 @@ if (USER.role === 'ADMIN') {
   async function registerExpense() {
     setMsg('msg', '');
 
-    const btn = $('btnSaveExpense'); // coloque id="btnSaveExpense" no botão Registrar
+    const btn = $('btnSaveExpense');
     if (btn) {
       btn.disabled = true;
       btn.textContent = 'Salvando...';
@@ -433,7 +408,7 @@ if (USER.role === 'ADMIN') {
 
   // --------- Relatório ---------
   async function printPdf() {
-    const btn = $('btnPrintPdf'); // coloque id="btnPrintPdf" no botão Imprimir PDF
+    const btn = $('btnPrintPdf');
     if (btn) {
       btn.disabled = true;
       btn.textContent = 'Gerando...';
@@ -467,15 +442,26 @@ if (USER.role === 'ADMIN') {
   }
 
   function toggleAdmin() {
-    $('adminArea').classList.toggle('hidden');
+    const adminArea = $('adminArea');
+    if (!adminArea) return;
+    adminArea.classList.toggle('hidden');
   }
 
   function adminTab(tabName) {
-    // Placeholder para você implementar depois
-    console.log('Trocar para aba admin:', tabName);
+    // Aqui você depois implementa as telas de cadastro (usuários, obras, etc.)
+    const tabs = ['users', 'works', 'emails', 'logo', 'month'];
+    tabs.forEach((name) => {
+      const el = $(`adm_${name}`);
+      if (!el) return;
+      if (name === tabName) {
+        el.classList.remove('hidden');
+      } else {
+        el.classList.add('hidden');
+      }
+    });
   }
 
-  // --------- Service Worker (opcional) ---------
+  // --------- Service Worker (offline estático) ---------
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker
