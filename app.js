@@ -436,13 +436,6 @@ const App = (() => {
     if (!el) return;
     el.type = el.type === 'password' ? 'text' : 'password';
   }
-
-  function toggleAdmin() {
-    const adminArea = $('adminArea');
-    if (!adminArea) return;
-    adminArea.classList.toggle('hidden');
-  }
-
   function adminTab(tabName) {
     // Aqui você depois implementa as telas de cadastro (usuários, obras, etc.)
     const tabs = ['users', 'works', 'emails', 'logo', 'month'];
@@ -467,16 +460,15 @@ const App = (() => {
   }
 
   // --------- API pública do módulo ---------
-  return {
-    login,
-    changePassword,
-    togglePass,
-    registerExpense,
-    refreshAll,
-    onChangeObra,
-    printPdf,
-    logout,
-    toggleAdmin,
-    adminTab,
-  };
+ return {
+  login,
+  changePassword,
+  togglePass,
+  registerExpense,
+  refreshAll,
+  onChangeObra,
+  printPdf,
+  logout,
+  adminTab,
+};
 })();
