@@ -65,11 +65,10 @@
 <!-- APP PRINCIPAL -->
 <section id="appArea" class="hidden">
 
-  <!-- TABS PRINCIPAIS -->
   <div class="mainTabs">
     <button class="tabBtn active" onclick="App.mainTab('lancamentos')" id="tabBtnLanc">Lançamentos</button>
     <button class="tabBtn" onclick="App.mainTab('relatorios')" id="tabBtnRel">Relatórios</button>
-    <button class="tabBtn admin-only hidden" onclick="App.mainTab('admin')" id="tabBtnAdmin">Administração</button>
+    <button class="tabBtn hidden" onclick="App.mainTab('admin')" id="tabBtnAdmin">Administração</button>
   </div>
 
   <!-- TAB: LANÇAMENTOS -->
@@ -121,22 +120,10 @@
         <button class="btn btn-sm" onclick="App.printReport()">🖨 Imprimir PDF</button>
       </div>
       <div class="kpis">
-        <div class="kpi">
-          <span class="kLabel">Total no mês</span>
-          <span class="kVal" id="kTotal">R$ 0,00</span>
-        </div>
-        <div class="kpi">
-          <span class="kLabel">Maior categoria</span>
-          <span class="kVal" id="kTop">-</span>
-        </div>
-        <div class="kpi">
-          <span class="kLabel">Menor categoria</span>
-          <span class="kVal" id="kBottom">-</span>
-        </div>
-        <div class="kpi">
-          <span class="kLabel">Status do mês</span>
-          <span class="kVal" id="kStatus">-</span>
-        </div>
+        <div class="kpi"><span class="kLabel">Total no mês</span><span class="kVal" id="kTotal">R$ 0,00</span></div>
+        <div class="kpi"><span class="kLabel">Maior categoria</span><span class="kVal" id="kTop">-</span></div>
+        <div class="kpi"><span class="kLabel">Menor categoria</span><span class="kVal" id="kBottom">-</span></div>
+        <div class="kpi"><span class="kLabel">Status do mês</span><span class="kVal" id="kStatus">-</span></div>
       </div>
       <h3>Evolução diária</h3>
       anvas id="chartLine"></canvas>
@@ -194,7 +181,7 @@
 
       <!-- Emails -->
       <div id="adm_emails" class="admPanel hidden">
-        <p class="muted small">Destinatários que recebem o relatório mensal por email.</p>
+        <p class="muted small">Destinatários que recebem o relatório mensal.</p>
         <div class="formGrid">
           <input id="ae_email" placeholder="email@exemplo.com" type="email" />
           <input id="ae_nome" placeholder="Nome" />
@@ -232,7 +219,7 @@
 
       <!-- Fechamento -->
       <div id="adm_month" class="admPanel hidden">
-        <p class="muted small">Feche um mês para impedir novos lançamentos. Meses fechados ficam somente leitura.</p>
+        <p class="muted small">Feche um mês para impedir novos lançamentos.</p>
         <div class="formGrid">
           <input id="monthRef" type="month" />
           <button class="btn btn-danger" onclick="App.closeMonth()">🔒 Fechar mês</button>
@@ -246,7 +233,6 @@
   </div>
 </section>
 
-<!-- OFFLINE BANNER -->
 <div id="offlineBanner" class="offlineBanner hidden">⚠️ Sem conexão — modo offline</div>
 
 <script src="app.js"></script>
