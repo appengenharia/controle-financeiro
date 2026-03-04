@@ -1,1 +1,301 @@
-<!doctype html><html><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>CFO</title><script src='https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js'></script><link rel='stylesheet' href='style.css'></head><body><div class='topbar'><div class='brand' id='brandTitle'>Controle Financeiro de Obras</div><div class='rightTop'><div id='pillUser' class='pill hidden'></div><button id='btnLogout' class='btn btn-ghost hidden' onclick='App.logout()'>Sair</button></div></div><section id='loginArea' class='wrap'><div class='card'><h2>Login</h2><label>Perfil</label><select id='loginRole'><option value='USER'>Usuário</option><option value='ADMIN'>Administrador</option></select><label>Usuário</label><input id='loginUser'><label>Senha</label><div class='passRow'><input id='loginPass' type='password'><button class='eyeBtn' type='button' onclick="App.togglePass('loginPass')">👁</button></div><button class='btn btn-primary full' onclick='App.login()'>Entrar</button><div id='loginMsg' class='msg'></div></div></section><section id='pwArea' class='wrap hidden'><div class='card'><h2>Trocar senha</h2><label>Nova senha</label><div class='passRow'><input id='pw1' type='password'><button class='eyeBtn' type='button' onclick="App.togglePass('pw1')">👁</button></div><label>Confirmar</label><div class='passRow'><input id='pw2' type='password'><button class='eyeBtn' type='button' onclick="App.togglePass('pw2')">👁</button></div><button class='btn btn-primary full' onclick='App.changePassword()'>Salvar</button><div id='pwMsg' class='msg'></div></div></section><section id='appArea' class='main hidden'><div class='left'><div class='card'><h3>Lançar despesa</h3><label>Obra</label><select id='obraSelect' onchange='App.onChangeObra()'></select><label>Data</label><input id='inpData' type='date'><label>Categoria</label><select id='inpCat'></select><label>Detalhes</label><input id='inpDet'><div class='row'><div><label>Valor (R$)</label><input id='inpVal'></div><div><label>Reembolsável</label><select id='inpReemb'><option value='SIM'>SIM</option><option value='NAO'>NÃO</option></select></div></div><button class='btn btn-primary full' onclick='App.registerExpense()'>Registrar</button><div id='msg' class='msg'></div></div></div><div class='right'><div class='card'><div class='row' style='align-items:flex-end;'><div><label>Mês</label><input id='fMes' type='month' onchange='App.refreshAll()'></div><div style='display:flex; justify-content:flex-end; gap:10px;'><button class='btn btn-primary' onclick='App.printPdf()'>Imprimir PDF</button><button id='btnAdmin' class='btn hidden' onclick='App.toggleAdmin()'>Admin</button></div></div></div><div class='kpis'><div class='kpi'><div class='t'>Total</div><div id='kTotal' class='v'>R$ 0,00</div></div><div class='kpi'><div class='t'>Maior</div><div id='kTop' class='v'>-</div></div><div class='kpi'><div class='t'>Menor</div><div id='kBottom' class='v'>-</div></div><div class='kpi'><div class='t'>Status</div><div id='kStatus' class='v'>-</div></div></div><div class='card'><h3>Evolução diária</h3><canvas id='chartLine' height='140'></canvas></div><div class='card'><h3>Resumo por categoria</h3><table><thead><tr><th>Categoria</th><th>Total</th></tr></thead><tbody id='tbResumo'></tbody></table></div><div id='adminArea' class='card hidden'><h3>Administração</h3><div class='tabs'><button class='tab' onclick="App.adminTab('users')">Usuários</button><button class='tab' onclick="App.adminTab('works')">Obras</button><button class='tab' onclick="App.adminTab('emails')">Emails</button><button class='tab' onclick="App.adminTab('logo')">Logo/Config</button><button class='tab' onclick="App.adminTab('month')">Fechamento</button></div><div id='adm_users' class='adm hidden'></div><div id='adm_works' class='adm hidden'></div><div id='adm_emails' class='adm hidden'></div><div id='adm_logo' class='adm hidden'></div><div id='adm_month' class='adm hidden'></div><div id='admMsg' class='msg'></div></div></div></section><script src='app.js'></script></body></html>
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1"
+    >
+
+    <title>CFO</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+  </head>
+
+  <body>
+    <!-- Topbar -->
+    <div class="topbar">
+      <div class="brand" id="brandTitle">
+        Controle Financeiro de Obras
+      </div>
+
+      <div class="rightTop">
+        <div id="pillUser" class="pill hidden"></div>
+
+        <button
+          id="btnLogout"
+          class="btn btn-ghost hidden"
+          onclick="App.logout()"
+        >
+          Sair
+        </button>
+      </div>
+    </div>
+
+    <!-- Área de Login -->
+    <section id="loginArea" class="wrap">
+      <div class="card">
+        <h2>Login</h2>
+
+        <label for="loginRole">Perfil</label>
+        <select id="loginRole">
+          <option value="USER">Usuário</option>
+          <option value="ADMIN">Administrador</option>
+        </select>
+
+        <label for="loginUser">Usuário</label>
+        <input id="loginUser">
+
+        <label for="loginPass">Senha</label>
+        <div class="passRow">
+          <input id="loginPass" type="password">
+          <button
+            class="eyeBtn"
+            type="button"
+            onclick="App.togglePass('loginPass')"
+          >
+            👁
+          </button>
+        </div>
+
+        <button
+          class="btn btn-primary full"
+          onclick="App.login()"
+        >
+          Entrar
+        </button>
+
+        <div id="loginMsg" class="msg"></div>
+      </div>
+    </section>
+
+    <!-- Área de troca de senha -->
+    <section id="pwArea" class="wrap hidden">
+      <div class="card">
+        <h2>Trocar senha</h2>
+
+        <label for="pw1">Nova senha</label>
+        <div class="passRow">
+          <input id="pw1" type="password">
+          <button
+            class="eyeBtn"
+            type="button"
+            onclick="App.togglePass('pw1')"
+          >
+            👁
+          </button>
+        </div>
+
+        <label for="pw2">Confirmar</label>
+        <div class="passRow">
+          <input id="pw2" type="password">
+          <button
+            class="eyeBtn"
+            type="button"
+            onclick="App.togglePass('pw2')"
+          >
+            👁
+          </button>
+        </div>
+
+        <button
+          class="btn btn-primary full"
+          onclick="App.changePassword()"
+        >
+          Salvar
+        </button>
+
+        <div id="pwMsg" class="msg"></div>
+      </div>
+    </section>
+
+    <!-- Área principal da aplicação -->
+    <section id="appArea" class="main hidden">
+      <div class="left">
+        <div class="card">
+          <h3>Lançar despesa</h3>
+
+          <label for="obraSelect">Obra</label>
+          <select
+            id="obraSelect"
+            onchange="App.onChangeObra()"
+          ></select>
+
+          <label for="inpData">Data</label>
+          <input id="inpData" type="date">
+
+          <label for="inpCat">Categoria</label>
+          <select id="inpCat"></select>
+
+          <label for="inpDet">Detalhes</label>
+          <input id="inpDet">
+
+          <div class="row">
+            <div>
+              <label for="inpVal">Valor (R$)</label>
+              <input id="inpVal">
+            </div>
+
+            <div>
+              <label for="inpReemb">Reembolsável</label>
+              <select id="inpReemb">
+                <option value="SIM">SIM</option>
+                <option value="NAO">NÃO</option>
+              </select>
+            </div>
+          </div>
+
+          <button
+            class="btn btn-primary full"
+            onclick="App.registerExpense()"
+          >
+            Registrar
+          </button>
+
+          <div id="msg" class="msg"></div>
+        </div>
+      </div>
+
+      <div class="right">
+        <!-- Filtros / topo do dashboard -->
+        <div class="card">
+          <div
+            class="row"
+            style="align-items: flex-end;"
+          >
+            <div>
+              <label for="fMes">Mês</label>
+              <input
+                id="fMes"
+                type="month"
+                onchange="App.refreshAll()"
+              >
+            </div>
+
+            <div
+              style="
+                display: flex;
+                justify-content: flex-end;
+                gap: 10px;
+              "
+            >
+              <button
+                class="btn btn-primary"
+                onclick="App.printPdf()"
+              >
+                Imprimir PDF
+              </button>
+
+              <button
+                id="btnAdmin"
+                class="btn hidden"
+                onclick="App.toggleAdmin()"
+              >
+                Admin
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- KPIs -->
+        <div class="kpis">
+          <div class="kpi">
+            <div class="t">Total</div>
+            <div id="kTotal" class="v">R$ 0,00</div>
+          </div>
+
+          <div class="kpi">
+            <div class="t">Maior</div>
+            <div id="kTop" class="v">-</div>
+          </div>
+
+          <div class="kpi">
+            <div class="t">Menor</div>
+            <div id="kBottom" class="v">-</div>
+          </div>
+
+          <div class="kpi">
+            <div class="t">Status</div>
+            <div id="kStatus" class="v">-</div>
+          </div>
+        </div>
+
+        <!-- Gráfico -->
+        <div class="card">
+          <h3>Evolução diária</h3>
+          <canvas
+            id="chartLine"
+            height="140"
+          ></canvas>
+        </div>
+
+        <!-- Resumo por categoria -->
+        <div class="card">
+          <h3>Resumo por categoria</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Categoria</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody id="tbResumo"></tbody>
+          </table>
+        </div>
+
+        <!-- Área de administração -->
+        <div id="adminArea" class="card hidden">
+          <h3>Administração</h3>
+
+          <div class="tabs">
+            <button
+              class="tab"
+              onclick="App.adminTab('users')"
+            >
+              Usuários
+            </button>
+
+            <button
+              class="tab"
+              onclick="App.adminTab('works')"
+            >
+              Obras
+            </button>
+
+            <button
+              class="tab"
+              onclick="App.adminTab('emails')"
+            >
+              Emails
+            </button>
+
+            <button
+              class="tab"
+              onclick="App.adminTab('logo')"
+            >
+              Logo/Config
+            </button>
+
+            <button
+              class="tab"
+              onclick="App.adminTab('month')"
+            >
+              Fechamento
+            </button>
+          </div>
+
+          <div id="adm_users" class="adm hidden"></div>
+          <div id="adm_works" class="adm hidden"></div>
+          <div id="adm_emails" class="adm hidden"></div>
+          <div id="adm_logo" class="adm hidden"></div>
+          <div id="adm_month" class="adm hidden"></div>
+
+          <div id="admMsg" class="msg"></div>
+        </div>
+      </div>
+    </section>
+
+    <script src="app.js"></script>
+  </body>
+</html>
