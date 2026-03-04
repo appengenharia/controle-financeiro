@@ -1,15 +1,15 @@
-/* =========================
- * Configuração
- * ========================= */
+// =========================
+// Configuração da API
+// =========================
 
-const API_URL = 'https://twilight-firefly-1225.josimar-rrocha.workers.dev';
+const API_URL = 'https://twilight-firefly-1225.josimar-rrocha.workers.dev'; // coloque aqui a URL /exec do Apps Script via worker
 
-/* =========================
- * Módulo principal da aplicação (IIFE)
- * ========================= */
+// =========================
+// Módulo principal da aplicação (IIFE)
+// =========================
 
 const App = (() => {
-  /* --------- Estado interno --------- */
+  // --------- Estado interno ---------
   let TOKEN = '';
   let USER = null;
   let WORKS = [];
@@ -17,7 +17,7 @@ const App = (() => {
   let currentObraId = '';
   let lineChart = null;
 
-  /* --------- Utilitários --------- */
+  // --------- Utilitários ---------
   const $ = (id) => document.getElementById(id);
 
   const formatBRL = (value) =>
@@ -41,7 +41,7 @@ const App = (() => {
     return `${year}-${month}`;
   };
 
-  /* --------- Comunicação com API --------- */
+  // --------- Comunicação com API ---------
   async function api(action, payload = {}) {
     if (!API_URL || API_URL.includes('COLE_AQUI')) {
       throw new Error('Configure a API_URL no app.js.');
@@ -68,10 +68,11 @@ const App = (() => {
     return data.data;
   }
 
-  /* --------- Preenchimento de selects / UI --------- */
-
+  // --------- Preenchimento de selects / UI ---------
   function fillWorks() {
     const select = $('obraSelect');
+    if (!select) return;
+
     select.innerHTML = '';
 
     (WORKS || []).forEach((obra) => {
@@ -90,6 +91,8 @@ const App = (() => {
 
   function fillCats() {
     const select = $('inpCat');
+    if (!select) return;
+
     select.innerHTML = '';
 
     (CATEGORIAS || []).forEach((categoria) => {
@@ -100,10 +103,15 @@ const App = (() => {
     });
   }
 
-  /* --------- Autenticação --------- */
-
+  // --------- Autenticação ---------
   async function login() {
     setMsg('loginMsg', '');
+
+    const btn = $('btnLogin'); // adicione id="btnLogin" no HTML do botão Entrar
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Entrando...';
+    }
 
     try {
       const role = $('loginRole').value;
@@ -122,10 +130,15 @@ const App = (() => {
       CATEGORIAS = result.categorias || [];
 
       const pillUser = $('pillUser');
-      pillUser.textContent = `${USER.role} • ${USER.username}`;
-      pillUser.classList.remove('hidden');
+      if (pillUser) {
+        pillUser.textContent = `${USER.role} • ${USER.username}`;
+        pillUser.classList.remove('hidden');
+      }
 
-      $('btnLogout').classList.remove('hidden');
+      const btnLogout = $('btnLogout');
+      if (btnLogout) {
+        btnLogout.classList.remove('hidden');
+      }
 
       if (USER.primeiro_acesso) {
         $('loginArea').classList.add('hidden');
@@ -136,11 +149,22 @@ const App = (() => {
       await initApp();
     } catch (e) {
       setMsg('loginMsg', e.message || String(e));
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Entrar';
+      }
     }
   }
 
   async function changePassword() {
     setMsg('pwMsg', '');
+
+    const btn = $('btnSavePw'); // coloque id="btnSavePw" no botão Salvar da troca de senha
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Salvando...';
+    }
 
     try {
       const p1 = $('pw1').value;
@@ -169,35 +193,46 @@ const App = (() => {
       await initApp();
     } catch (e) {
       setMsg('pwMsg', e.message || String(e));
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Salvar';
+      }
     }
   }
 
   async function logout() {
+    const btn = $('btnLogout');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Saindo...';
+    }
+
     try {
       if (TOKEN) {
         await api('auth.logout', { token: TOKEN });
       }
     } catch (_e) {
       // silencioso
+    } finally {
+      location.reload();
     }
-
-    location.reload();
   }
 
-  /* --------- Inicialização da aplicação --------- */
-
+  // --------- Inicialização da aplicação ---------
   async function initApp() {
-    const initData = await api('app.init', { token: TOKEN });
+    const init = await api('app.init', { token: TOKEN });
 
-    WORKS = initData.works || WORKS;
-    CATEGORIAS = initData.categorias || CATEGORIAS;
+    WORKS = init.works || WORKS;
+    CATEGORIAS = init.categorias || CATEGORIAS;
 
-    currentObraId = WORKS[0]?.obra_id || '';
+    currentObraId = init.primaryObraId || (WORKS[0]?.obra_id || '');
 
     fillWorks();
     fillCats();
 
-    $('fMes').value = currentMonth();
+    const monthRef = init.initialMonthRef || currentMonth();
+    $('fMes').value = monthRef;
 
     $('loginArea').classList.add('hidden');
     $('pwArea').classList.add('hidden');
@@ -207,13 +242,70 @@ const App = (() => {
       $('btnAdmin').classList.remove('hidden');
     }
 
-    refreshAll();
+    if (init.initialSummary && init.initialSeries && currentObraId) {
+      applySummaryAndSeries(init.initialSummary, init.initialSeries);
+    } else {
+      refreshAll();
+    }
   }
 
-  /* --------- Despesas --------- */
+  function applySummaryAndSeries(summary, series) {
+    $('kTotal').textContent = formatBRL(summary.totalGeral);
+    $('kStatus').textContent = summary.isClosed ? 'FECHADO' : 'ABERTO';
+    $('kTop').textContent = summary.maiorCategoria || '-';
+    $('kBottom').textContent = summary.menorCategoria || '-';
 
+    const tbody = $('tbResumo');
+    tbody.innerHTML = '';
+
+    (CATEGORIAS || []).forEach((cat) => {
+      const value = Number(summary.totals?.[cat] || 0);
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><b>${cat}</b></td>
+        <td>${formatBRL(value)}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    const labels = (series.points || []).map((p) => p.date);
+    const values = (series.points || []).map((p) => Number(p.total || 0));
+
+    if (lineChart) {
+      lineChart.destroy();
+    }
+
+    const ctx = document.getElementById('chartLine');
+    lineChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            data: values,
+            tension: 0.25,
+          },
+        ],
+      },
+      options: {
+        plugins: {
+          legend: {
+            display: false,
+          },
+        },
+      },
+    });
+  }
+
+  // --------- Despesas ---------
   async function registerExpense() {
     setMsg('msg', '');
+
+    const btn = $('btnSaveExpense'); // coloque id="btnSaveExpense" no botão Registrar
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Salvando...';
+    }
 
     try {
       const data = $('inpData').value;
@@ -254,78 +346,36 @@ const App = (() => {
       $('inpVal').value = '';
 
       setMsg('msg', 'Registrado.', true);
-      refreshAll();
+      await refreshAll();
     } catch (e) {
       setMsg('msg', e.message || String(e));
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Registrar';
+      }
     }
   }
 
-  /* --------- Dashboard / Resumo --------- */
-
+  // --------- Dashboard / Resumo ---------
   async function refreshAll() {
     try {
       const monthRef = $('fMes').value || currentMonth();
       if (!currentObraId) return;
 
-      // Resumo
-      const summary = await api('dash.summary', {
+      const sum = await api('dash.summary', {
         token: TOKEN,
         monthRef,
         obra_id: currentObraId,
       });
 
-      $('kTotal').textContent = formatBRL(summary.totalGeral);
-      $('kStatus').textContent = summary.isClosed ? 'FECHADO' : 'ABERTO';
-      $('kTop').textContent = summary.maiorCategoria || '-';
-      $('kBottom').textContent = summary.menorCategoria || '-';
-
-      const tbody = $('tbResumo');
-      tbody.innerHTML = '';
-
-      (CATEGORIAS || []).forEach((cat) => {
-        const value = Number(summary.totals?.[cat] || 0);
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td><b>${cat}</b></td>
-          <td>${formatBRL(value)}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      // Série / Gráfico
       const series = await api('dash.series', {
         token: TOKEN,
         monthRef,
         obra_id: currentObraId,
       });
 
-      const labels = (series.points || []).map((p) => p.date);
-      const values = (series.points || []).map((p) => Number(p.total || 0));
-
-      if (lineChart) {
-        lineChart.destroy();
-      }
-
-      const ctx = document.getElementById('chartLine');
-      lineChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels,
-          datasets: [
-            {
-              data: values,
-              tension: 0.25,
-            },
-          ],
-        },
-        options: {
-          plugins: {
-            legend: {
-              display: false,
-            },
-          },
-        },
-      });
+      applySummaryAndSeries(sum, series);
     } catch (_e) {
       // silencioso; em produção, logaria o erro
     }
@@ -336,24 +386,38 @@ const App = (() => {
     refreshAll();
   }
 
-  /* --------- Relatório --------- */
-
+  // --------- Relatório ---------
   async function printPdf() {
-    const monthRef = $('fMes').value || currentMonth();
+    const btn = $('btnPrintPdf'); // coloque id="btnPrintPdf" no botão Imprimir PDF
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Gerando...';
+    }
 
-    const result = await api('report.pdf', {
-      token: TOKEN,
-      monthRef,
-      obra_id: currentObraId,
-    });
+    try {
+      const monthRef = $('fMes').value || currentMonth();
 
-    window.open(result.fileUrl, '_blank');
+      const result = await api('report.pdf', {
+        token: TOKEN,
+        monthRef,
+        obra_id: currentObraId,
+      });
+
+      window.open(result.fileUrl, '_blank');
+    } catch (e) {
+      alert(e.message || String(e));
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Imprimir PDF';
+      }
+    }
   }
 
-  /* --------- Helpers de UI --------- */
-
+  // --------- Helpers de UI ---------
   function togglePass(id) {
     const el = $(id);
+    if (!el) return;
     el.type = el.type === 'password' ? 'text' : 'password';
   }
 
@@ -361,12 +425,21 @@ const App = (() => {
     $('adminArea').classList.toggle('hidden');
   }
 
-  function adminTab() {
-    // futuro: lógica das abas de admin
+  function adminTab(tabName) {
+    // Placeholder para você implementar depois
+    console.log('Trocar para aba admin:', tabName);
   }
 
-  /* --------- API pública do módulo --------- */
+  // --------- Service Worker (opcional) ---------
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker
+        .register('./service-worker.js')
+        .catch(() => {});
+    });
+  }
 
+  // --------- API pública do módulo ---------
   return {
     login,
     changePassword,
