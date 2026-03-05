@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbwUBmnkEkUKJGfCoDcu547QNlqzpmjuyT-iLDshB1gJWYgRmi6fnPLiCJTWpBAzKSfjZw/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyvl3yXHIrnkXIZcVPmxXVJ3accdV7VR2U4jS6gVRnOz-eqJ3EttX5Xh_BzPQeD838Brg/exec";
 
 const App = (() => {
   let TOKEN = "", USER = null, WORKS = [], CATEGORIAS = [];
